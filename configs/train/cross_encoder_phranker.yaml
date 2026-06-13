@@ -1,0 +1,27 @@
+model_name: itdainb/PhoRanker
+retriever_model: phatvucoder/vietnamese-bi-encoder
+data_path: data/processed
+segmentation: pyvi
+neg_path: data/processed/10_moderate_neg.csv
+num_negatives: 10
+loss_type: bce
+output_dir: models/CrossEncoder/PhoRanker
+max_length: 256
+trust_remote_code: false
+num_epochs: 2
+batch_size: 64
+learning_rate: 2.0e-5
+warmup_steps: 0
+seed: 22520465
+name: cross_phranker_n10_bce
+output_scores: results/train/cross-encoder-phranker-n10-bce.json
+eval_metrics:
+  - {name: mrr@10, fn: mrr_at_k, k: 10}
+  - {name: recall@1, fn: recall_at_k, k: 1}
+  - {name: recall@3, fn: recall_at_k, k: 3}
+  - {name: recall@5, fn: recall_at_k, k: 5}
+  - {name: recall@10, fn: recall_at_k, k: 10}
+  - {name: recall@20, fn: recall_at_k, k: 20}
+  - {name: ndcg@5, fn: ndcg_at_k, k: 5}
+  - {name: ndcg@10, fn: ndcg_at_k, k: 10}
+  - {name: ndcg@20, fn: ndcg_at_k, k: 20}

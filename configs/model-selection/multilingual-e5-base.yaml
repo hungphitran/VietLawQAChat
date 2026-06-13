@@ -1,0 +1,23 @@
+name: zero-shot-multilingual-e5-base
+
+data:
+  data_path: data/processed
+  corpus_from: eval
+
+retrieval:
+  method: dense
+  top_k: 100
+  params:
+    model_name: intfloat/multilingual-e5-base
+    encode_kwargs: { batch_size: 128 }
+    max_length: 512
+
+reranking: null
+
+evaluation:
+  metrics:
+    all
+
+output:
+  predictions: results/model-selection/multilingual-e5-base/outputeval.txt
+  scores: results/model-selection/multilingual-e5-base/scores.json

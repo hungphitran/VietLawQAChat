@@ -1,0 +1,6 @@
+{
+  "train-vietnamese-bi-encoder": {
+    "mrr@10": 0.6281017647505899,
+    "success@100": 0.9768781801855732
+  }
+}

@@ -1,0 +1,23 @@
+name: zero-shot-granite-embedding-97m-multilingual-r2
+
+data:
+  data_path: data/processed
+  corpus_from: eval
+
+retrieval:
+  method: dense
+  top_k: 100
+  params:
+    model_name: ibm-granite/granite-embedding-97m-multilingual-r2
+    encode_kwargs: { batch_size: 128 }
+    max_length: 512
+
+reranking: null
+
+evaluation:
+  metrics:
+    all
+
+output:
+  predictions: results/model-selection/granite-embedding-97m-multilingual-r2/outputeval.txt
+  scores: results/model-selection/granite-embedding-97m-multilingual-r2/scores.json

@@ -1,0 +1,19 @@
+name: train-embeddinggemma-300m-mp
+loss_type: multi_positive
+model_name: google/embeddinggemma-300m
+segmentation: null
+data_path: data/processed
+output_dir: models/BiEncoder/embeddinggemma-300m-mp
+num_epochs: 10
+batch_size: 64
+max_length: 512
+learning_rate: 4.0e-5
+weight_decay: 0.02
+eval_strategy: epoch
+metric_for_best_model: eval_loss
+eval_top_k: 100
+eval_metrics:
+  - { name: mrr@10, fn: mrr_at_k, k: 10 }
+  - { name: success@100, fn: success_at_k, k: 100 }
+seed: 28
+output_scores: results/train/bi-encoder-gemma-mp-scores.json

@@ -1,0 +1,39 @@
+name: hybrid-bm25+dense-trained+crossencoder-trained
+
+data:
+  data_path: data/processed
+  corpus_path: data/raw/updated_corpus.csv
+
+retrieval:
+  method: hybrid
+  top_k: 100
+  params:
+    retrievers:
+      - method: bm25
+        params:
+          segmentation: underthesea
+      - method: dense
+        params:
+          model_name: phatvucoder/vietnamese-bi-encoder
+          segmentation: pyvi
+    weights: [0.5, 0.5]
+    fusion: rrf
+    fusion_kwargs:
+      k: 60
+
+reranking:
+  method: cross_encoder
+  top_k: 10
+  params:
+    model_name: models/CrossEncoder/model1/best
+    max_length: 256
+
+evaluation:
+  metrics:
+    - { name: mrr@10, fn: mrr_at_k, k: 10 }
+    - { name: success@10, fn: success_at_k, k: 10 }
+    - { name: recall@100, fn: recall_at_k, k: 100 }
+
+output:
+  predictions: results/hybrid_bm25_dense_cross/outputeval.txt
+  scores: results/hybrid_bm25_dense_cross/scores.json

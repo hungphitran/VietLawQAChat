@@ -1,0 +1,6 @@
+{
+  "train-granite-embedding-97m-multilingual-r2": {
+    "mrr@10": 0.6038230819115956,
+    "success@100": 0.9667764142472314
+  }
+}

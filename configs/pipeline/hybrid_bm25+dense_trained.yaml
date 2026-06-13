@@ -1,0 +1,34 @@
+name: hybrid-bm25+dense-trained
+
+data:
+  data_path: data/processed
+  corpus_path: data/raw/updated_corpus.csv
+
+retrieval:
+  method: hybrid
+  top_k: 100
+  params:
+    retrievers:
+      - method: bm25
+        params:
+          segmentation: underthesea
+      - method: dense
+        params:
+          model_name: phatvucoder/vietnamese-bi-encoder
+          segmentation: pyvi
+    weights: [0.5, 0.5]
+    fusion: rrf
+    fusion_kwargs:
+      k: 60
+
+reranking: null
+
+evaluation:
+  metrics:
+    - { name: mrr@10, fn: mrr_at_k, k: 10 }
+    - { name: success@10, fn: success_at_k, k: 10 }
+    - { name: recall@100, fn: recall_at_k, k: 100 }
+
+output:
+  predictions: results/hybrid_bm25_dense_trained/outputeval.txt
+  scores: results/hybrid_bm25_dense_trained/scores.json

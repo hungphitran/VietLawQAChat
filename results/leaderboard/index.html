@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VNLegal RAG Leaderboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="data.js"></script>
+  <style>
+    [v-cloak] { display: none }
+    input[type="checkbox"] {
+      @apply rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5;
+    }
+    input[type="number"] {
+      @apply border rounded px-1 py-0.5 text-xs text-center w-14
+             focus:ring-1 focus:ring-blue-400 outline-none;
+    }
+    /* Sort headers */
+    th.sort {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s, color 0.15s;
+    }
+    th.sort:hover { background-color: #e0e7ff; }
+    th.sort.active { background-color: #eef2ff; color: #4338ca; }
+    .sort-arrow { opacity: 0.25; margin-left: 3px; font-size: 10px; }
+    th.sort:hover .sort-arrow { opacity: 0.6; }
+    th.sort.active .sort-arrow { opacity: 1; }
+    /* Favorite star */
+    .fav-btn { @apply text-sm leading-none transition-transform; }
+    .fav-btn:hover { transform: scale(1.3); }
+    .fav-btn.active { color: #f59e0b; }
+    /* Badge */
+    .badge {
+      @apply px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide;
+    }
+  </style>
+</head>
+<body class="h-screen overflow-hidden bg-gray-50 text-gray-800">
+<div id="app" v-cloak class="h-screen flex flex-col">
+  <!-- Header -->
+  <header class="flex items-center gap-3 px-4 py-2 bg-white border-b shadow-sm flex-shrink-0">
+    <span class="text-lg">🏆</span>
+    <h1 class="font-bold text-sm whitespace-nowrap">VNLegal RAG Leaderboard</h1>
+
+    <button @click="sidebarOpen = !sidebarOpen"
+            class="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+            title="Toggle sidebar">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h7"/>
+      </svg>
+    </button>
+
+    <div class="relative flex-1 max-w-sm">
+      <svg class="absolute left-2.5 top-2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input v-model="search" @keydown.escape="search=''" type="text" placeholder="Search experiments..."
+             class="w-full pl-8 pr-3 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+    </div>
+
+    <span class="text-xs text-gray-400 whitespace-nowrap">{{ sorted.length }} / {{ DATA.experiments.length }}</span>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Sidebar -->
+    <aside v-show="sidebarOpen"
+           class="w-60 bg-white border-r overflow-y-auto p-3 space-y-4 flex-shrink-0 text-sm">
+      <!-- Groups -->
+      <section>
+        <div class="flex items-center justify-between mb-1.5">
+          <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Groups</h3>
+          <button @click="toggleAllGroups" class="text-[11px] text-blue-500 hover:text-blue-700">
+            {{ allGroupsSel ? 'None' : 'All' }}
+          </button>
+        </div>
+        <label v-for="(g, id) in DATA.groups" :key="id"
+               class="flex items-center gap-1.5 py-0.5 cursor-pointer">
+          <input type="checkbox" :value="id" v-model="selGroups">
+          <span class="truncate text-xs" :title="g.label">{{ g.label }}</span>
+          <span class="text-gray-400 text-[11px] ml-auto flex-shrink-0">{{ g.count }}</span>
+        </label>
+      </section>
+
+      <!-- Metrics -->
+      <section>
+        <div class="flex items-center justify-between mb-1.5">
+          <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Metrics</h3>
+          <button @click="toggleAllMetrics" class="text-[11px] text-blue-500 hover:text-blue-700">
+            {{ allMetricsSel ? 'None' : 'All' }}
+          </button>
+        </div>
+        <label v-for="m in DATA.metrics" :key="m"
+               class="flex items-center gap-1.5 py-0.5 cursor-pointer">
+          <input type="checkbox" :value="m" v-model="selMetrics">
+          <span class="text-xs font-mono">{{ m }}</span>
+        </label>
+      </section>
+
+      <!-- Filters -->
+      <section>
+        <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Filters</h3>
+        <label class="flex items-center gap-1.5 py-0.5 cursor-pointer">
+          <input type="checkbox" v-model="favOnly">
+          <span class="text-xs text-gray-700">⭐ Favorites only</span>
+        </label>
+        <label class="flex items-center gap-1.5 py-0.5 cursor-pointer">
+          <input type="checkbox" v-model="hideNull">
+          <span class="text-xs text-gray-700">Hide missing metrics</span>
+        </label>
+        <p v-if="hideNull" class="text-[11px] text-gray-400 mt-0.5 ml-5">
+          {{ nullCount }} hidden
+        </p>
+      </section>
+
+      <!-- Overall -->
+      <section>
+        <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Overall</h3>
+        <label class="flex items-center gap-1.5 py-0.5 cursor-pointer">
+          <input type="radio" v-model="overallMode" value="strict">
+          <span class="text-xs text-gray-700">Strict</span>
+        </label>
+        <label class="flex items-center gap-1.5 py-0.5 cursor-pointer">
+          <input type="radio" v-model="overallMode" value="avg">
+          <span class="text-xs text-gray-700">Average</span>
+        </label>
+        <div v-if="selMetrics.length > 1" class="mt-2 space-y-1">
+          <span class="text-[11px] text-gray-400">Weight</span>
+          <div v-for="m in selMetrics" :key="'w'+m" class="flex items-center gap-2">
+            <span class="text-[11px] font-mono w-20 truncate" :title="m">{{ m }}</span>
+            <input type="number" v-model.number="weights[m]" min="0" max="10" step="0.1">
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <div class="flex-1 overflow-auto">
+        <table class="w-full text-xs">
+          <thead class="sticky top-0 bg-gray-100 z-10 shadow-sm">
+            <tr class="text-left text-gray-600">
+              <th class="px-2 py-2 w-10 text-center font-medium">#</th>
+              <th class="px-1 py-2 w-8 text-center font-medium">⭐</th>
+              <th class="px-2 py-2 sort font-medium" :class="{ active: sortKey === 'name' }"
+                  @click="toggle('name')">
+                Experiment<span class="sort-arrow">{{ sortArrow('name') }}</span>
+              </th>
+              <th class="px-2 py-2 sort font-medium" :class="{ active: sortKey === 'group' }"
+                  @click="toggle('group')">
+                Group<span class="sort-arrow">{{ sortArrow('group') }}</span>
+              </th>
+              <th class="px-2 py-2 sort font-medium" :class="{ active: sortKey === 'method' }"
+                  @click="toggle('method')">
+                Method<span class="sort-arrow">{{ sortArrow('method') }}</span>
+              </th>
+              <th v-if="selMetrics.length" class="px-3 py-2 text-right sort font-bold"
+                  :class="{ active: sortKey === 'overall' }" @click="toggle('overall')">
+                ⭐ Overall<span class="sort-arrow">{{ sortArrow('overall') }}</span>
+              </th>
+              <th v-for="m in selMetrics" :key="m"
+                  class="px-3 py-2 text-right sort font-medium" :class="{ active: sortKey === m }"
+                  @click="toggle(m)">
+                <span class="font-mono">{{ m }}</span><span class="sort-arrow">{{ sortArrow(m) }}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(exp, i) in paged" :key="exp.name + '|' + exp.group"
+                class="border-t border-gray-100 hover:bg-blue-50/50 transition-colors">
+              <td class="px-2 py-1.5 text-center text-gray-400 font-mono">{{ rank(i) }}</td>
+              <td class="px-1 py-1.5 text-center">
+                <button @click="toggleFav(exp.name)"
+                        class="fav-btn"
+                        :class="{ active: favSet.has(exp.name) }">
+                  {{ favSet.has(exp.name) ? '★' : '☆' }}
+                </button>
+              </td>
+              <td class="px-2 py-1.5 font-mono text-[11px] max-w-xs truncate" :title="exp.name">
+                {{ exp.name }}
+              </td>
+              <td class="px-2 py-1.5">
+                <span class="badge cursor-pointer" :class="groupColor(exp.group)"
+                      @click="selGroups = [exp.group]" :title="'Filter: ' + exp.group">
+                  {{ exp.group }}
+                </span>
+              </td>
+              <td class="px-2 py-1.5">
+                <span class="badge" :class="groupColor(exp.method)"
+                      :title="exp.model || ''">
+                  {{ exp.method }}{{ exp.model ? ' · ' + exp.model : '' }}
+                </span>
+              </td>
+              <td v-if="selMetrics.length" class="px-3 py-1.5 text-right font-mono font-bold"
+                  :class="overall(exp) != null && overall(exp) === best.overall ? 'text-emerald-600' : ''">
+                {{ fmt(overall(exp)) }}
+              </td>
+              <td v-for="m in selMetrics" :key="m"
+                  class="px-3 py-1.5 text-right font-mono"
+                  :class="exp.metrics[m] != null && exp.metrics[m] === best[m]
+                    ? 'text-emerald-600 font-semibold' : ''">
+                {{ fmt(exp.metrics[m]) }}
+              </td>
+            </tr>
+            <tr v-if="!paged.length">
+              <td :colspan="5 + selMetrics.length + (selMetrics.length ? 1 : 0)"
+                  class="px-4 py-12 text-center text-gray-400">
+                {{ favOnly ? 'No favorites yet — click ☆ to star experiments' : 'No experiments match filters' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1"
+           class="flex items-center justify-center gap-2 py-2 bg-white border-t flex-shrink-0">
+        <button @click="page = 1" :disabled="page === 1"
+                class="px-2 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30">«</button>
+        <button @click="page--" :disabled="page === 1"
+                class="px-2 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30">‹</button>
+        <span class="text-xs text-gray-600 tabular-nums">{{ page }} / {{ totalPages }}</span>
+        <button @click="page++" :disabled="page === totalPages"
+                class="px-2 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30">›</button>
+        <button @click="page = totalPages" :disabled="page === totalPages"
+                class="px-2 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30">»</button>
+        <select v-model.number="perPage" class="text-xs border rounded px-1 py-0.5 ml-2">
+          <option :value="25">25</option>
+          <option :value="50">50</option>
+          <option :value="100">100</option>
+          <option :value="9999">All</option>
+        </select>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, computed, watch } = Vue
+
+const FAV_KEY = 'vnlegal-leaderboard-favorites'
+let useApi = false
+
+async function apiLoad() {
+  const r = await fetch('/api/favorites'); if (!r.ok) throw 0; useApi = true; return await r.json()
+}
+async function apiSave(list) {
+  await fetch('/api/favorites', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(list) })
+}
+
+function lsLoad() { try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]') } catch { return [] } }
+function lsSave(list) { localStorage.setItem(FAV_KEY, JSON.stringify(list)) }
+
+function loadFavs() {
+  const embedded = DATA.favorites || []
+  const stored = lsLoad()
+  return [...new Set([...embedded, ...stored])]
+}
+
+createApp({
+  setup() {
+    const d = DATA
+
+    // State
+    const search = ref('')
+    const selGroups = ref(Object.keys(d.groups))
+    const selMetrics = ref([...d.metrics])
+    const weights = ref(Object.fromEntries(d.metrics.map(m => [m, 1])))
+    const sortKey = ref('overall')
+    const sortDesc = ref(true)
+    const page = ref(1)
+    const perPage = ref(50)
+    const sidebarOpen = ref(true)
+    const favorites = ref(loadFavs())
+    const favOnly = ref(false)
+
+    // Try loading from API (favorites.txt on disk), merge with local
+    apiLoad().then(names => {
+      const merged = new Set([...names, ...favorites.value])
+      favorites.value = [...merged]
+    }).catch(() => {})
+
+    // Reset page on filter change
+    watch([search, selGroups, selMetrics, favOnly], () => { page.value = 1 })
+
+    // Groups/metrics toggles
+    const allGroupsSel = computed(() => selGroups.value.length === Object.keys(d.groups).length)
+    const allMetricsSel = computed(() => selMetrics.value.length === d.metrics.length)
+    function toggleAllGroups() {
+      selGroups.value = allGroupsSel.value ? [] : Object.keys(d.groups)
+    }
+    function toggleAllMetrics() {
+      selMetrics.value = allMetricsSel.value ? [] : [...d.metrics]
+    }
+
+    // Favorites — save to favorites.txt (API) or localStorage
+    const favSet = computed(() => new Set(favorites.value))
+    function toggleFav(name) {
+      const s = new Set(favorites.value)
+      s.has(name) ? s.delete(name) : s.add(name)
+      favorites.value = [...s]
+      if (useApi) apiSave(favorites.value); else lsSave(favorites.value)
+    }
+
+    // Filtered (pre-null-filter)
+    const matched = computed(() => {
+      const q = search.value.toLowerCase()
+      return d.experiments.filter(e => {
+        if (!selGroups.value.includes(e.group)) return false
+        if (favOnly.value && !favSet.value.has(e.name)) return false
+        if (q) {
+          const haystack = (e.name + ' ' + e.method + ' ' + (e.model||'') + ' ' + e.group).toLowerCase()
+          if (!haystack.includes(q)) return false
+        }
+        return true
+      })
+    })
+
+    // Filtered (with null filter)
+    const filtered = computed(() => {
+      if (!hideNull.value) return matched.value
+      return matched.value.filter(e =>
+        selMetrics.value.every(m => e.metrics[m] != null)
+      )
+    })
+
+    const overallMode = ref('strict')
+    const hideNull = ref(false)
+
+    // Overall score — strict: null if any missing, avg: skip nulls
+    function overall(e) {
+      const selected = selMetrics.value
+      const hasNull = selected.some(m => e.metrics[m] == null)
+
+      if (overallMode.value === 'strict' && hasNull) return null
+
+      const vals = selected
+        .filter(m => e.metrics[m] != null)
+        .map(m => ({ v: e.metrics[m], w: weights.value[m] ?? 1 }))
+      if (!vals.length) return null
+
+      const sum = vals.reduce((acc, x) => acc + x.v * x.w, 0)
+      const w = vals.reduce((acc, x) => acc + x.w, 0)
+      return w > 0 ? sum / w : null
+    }
+
+    // Null filter
+    const nullCount = computed(() => {
+      return filtered.value.filter(e =>
+        selMetrics.value.some(m => e.metrics[m] == null)
+      ).length
+    })
+
+    // Sorted — nulls always at bottom regardless of sort direction
+    const sorted = computed(() => {
+      const arr = [...filtered.value]
+      const desc = sortDesc.value
+      const key = sortKey.value
+      arr.sort((a, b) => {
+        let va, vb
+        if (key === 'overall') { va = overall(a); vb = overall(b) }
+        else if (key === 'name') { va = a.name; vb = b.name }
+        else if (key === 'group') { va = a.group; vb = b.group }
+        else if (key === 'method') { va = (a.method||'') + (a.model||''); vb = (b.method||'') + (b.model||'') }
+        else { va = a.metrics[key]; vb = b.metrics[key] }
+
+        // Nulls always at bottom
+        const aNull = va == null, bNull = vb == null
+        if (aNull && bNull) return 0
+        if (aNull) return 1
+        if (bNull) return -1
+
+        if (key === 'name' || key === 'group' || key === 'method') {
+          const cmp = String(va).localeCompare(String(vb))
+          return desc ? -cmp : cmp
+        }
+        return desc ? vb - va : va - vb
+      })
+      return arr
+    })
+
+    // Best values
+    const best = computed(() => {
+      const b = {}
+      for (const m of selMetrics.value) {
+        const vals = filtered.value.map(e => e.metrics[m]).filter(v => v != null)
+        b[m] = vals.length ? Math.max(...vals) : null
+      }
+      const ov = filtered.value.map(e => overall(e)).filter(v => v != null)
+      b.overall = ov.length ? Math.max(...ov) : null
+      return b
+    })
+
+    // Pagination
+    const totalPages = computed(() => Math.max(1, Math.ceil(sorted.value.length / perPage.value)))
+    const paged = computed(() => {
+      const s = (page.value - 1) * perPage.value
+      return sorted.value.slice(s, s + perPage.value)
+    })
+    function rank(i) { return (page.value - 1) * perPage.value + i + 1 }
+
+    // Sort helpers
+    function toggle(key) {
+      if (sortKey.value === key) sortDesc.value = !sortDesc.value
+      else { sortKey.value = key; sortDesc.value = true }
+    }
+    function sortArrow(key) {
+      if (sortKey.value !== key) return '↕'
+      return sortDesc.value ? '▼' : '▲'
+    }
+
+    // Display helpers
+    function fmt(v) { return v != null ? v.toFixed(4) : '—' }
+    function groupColor(g) {
+      const palette = [
+        'bg-blue-100 text-blue-700',
+        'bg-purple-100 text-purple-700',
+        'bg-emerald-100 text-emerald-700',
+        'bg-amber-100 text-amber-700',
+        'bg-rose-100 text-rose-700',
+        'bg-cyan-100 text-cyan-700',
+        'bg-indigo-100 text-indigo-700',
+      ]
+      let h = 0
+      for (let i = 0; i < g.length; i++) h = ((h << 5) - h + g.charCodeAt(i)) | 0
+      return palette[Math.abs(h) % palette.length]
+    }
+
+    return {
+      DATA: d, search, selGroups, selMetrics, weights,
+      sortKey, sortDesc, page, perPage, sidebarOpen,
+      favorites, favOnly, favSet,
+      allGroupsSel, allMetricsSel, toggleAllGroups, toggleAllMetrics,
+      toggleFav,
+      filtered, sorted, best, totalPages, paged,
+      overallMode, hideNull, nullCount,
+      overall, rank, toggle, sortArrow, fmt, groupColor,
+    }
+  }
+}).mount('#app')
+</script>
+</body>
+</html>

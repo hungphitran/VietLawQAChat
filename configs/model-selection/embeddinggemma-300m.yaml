@@ -1,0 +1,23 @@
+name: zero-shot-embeddinggemma-300m
+
+data:
+  data_path: data/processed
+  corpus_from: eval
+
+retrieval:
+  method: dense
+  top_k: 100
+  params:
+    model_name: google/embeddinggemma-300m
+    encode_kwargs: { batch_size: 64 }
+    max_length: 512
+
+reranking: null
+
+evaluation:
+  metrics:
+    all
+
+output:
+  predictions: results/model-selection/embeddinggemma-300m/outputeval.txt
+  scores: results/model-selection/embeddinggemma-300m/scores.json

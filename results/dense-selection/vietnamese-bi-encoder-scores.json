@@ -1,0 +1,6 @@
+{
+  "dense-vietnamese-bi-encoder": {
+    "mrr@10": 0.4614962372258055,
+    "success@100": 0.8806495061358874
+  }
+}

@@ -1,0 +1,24 @@
+name: zero-shot-phobert-large
+
+data:
+  data_path: data/processed
+  corpus_from: eval
+
+retrieval:
+  method: dense
+  top_k: 100
+  params:
+    model_name: vinai/phobert-large
+    segmentation: pyvi
+    encode_kwargs: { batch_size: 64 }
+    max_length: 256
+
+reranking: null
+
+evaluation:
+  metrics:
+    all
+
+output:
+  predictions: results/model-selection/phobert-large/outputeval.txt
+  scores: results/model-selection/phobert-large/scores.json

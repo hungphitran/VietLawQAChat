@@ -1,0 +1,23 @@
+name: bm25-pyvi
+
+data:
+  data_path: data/processed
+
+retrieval:
+  method: bm25
+  top_k: 100
+  params:
+    variant: bm25
+    segmentation: pyvi
+    k1: [1.0, 1.2, 1.5, 1.8, 2.0, 2.2]
+    b: [0.6, 0.75, 0.9]
+
+reranking: null
+
+evaluation:
+  metrics:
+    - { name: mrr@10, fn: mrr_at_k, k: 10 }
+    - { name: success@100, fn: success_at_k, k: 100 }
+    
+output:
+  scores: results/baseline-selection/bm25-pyvi-seg-scores.json

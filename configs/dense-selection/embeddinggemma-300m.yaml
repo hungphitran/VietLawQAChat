@@ -1,0 +1,23 @@
+name: dense-embeddinggemma-300m
+
+data:
+  data_path: data/processed
+
+retrieval:
+  method: dense
+  top_k: 100
+  params:
+    model_name: google/embeddinggemma-300m
+    segmentation: null
+    encode_kwargs: { batch_size: 64, show_progress_bar: true }
+    max_length: 512
+
+reranking: null
+
+evaluation:
+  metrics:
+    - { name: mrr@10, fn: mrr_at_k, k: 10 }
+    - { name: success@100, fn: success_at_k, k: 100 }
+
+output:
+  scores: results/dense-selection/embeddinggemma-300m-scores.json

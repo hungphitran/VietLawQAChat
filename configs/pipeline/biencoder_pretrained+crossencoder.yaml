@@ -1,0 +1,29 @@
+name: biencoder-pretrained+crossencoder
+
+data:
+  data_path: data/processed
+  corpus_path: data/raw/updated_corpus.csv
+
+retrieval:
+  method: dense
+  top_k: 100
+  params:
+    model_name: bkai-foundation-models/vietnamese-bi-encoder
+    segmentation: pyvi
+
+reranking:
+  method: cross_encoder
+  top_k: 10
+  params:
+    model_name: itdainb/PhoRanker
+    max_length: 256
+
+evaluation:
+  metrics:
+    - { name: mrr@10, fn: mrr_at_k, k: 10 }
+    - { name: success@10, fn: success_at_k, k: 10 }
+    - { name: recall@100, fn: recall_at_k, k: 100 }
+
+output:
+  predictions: results/biencoder_pretrained_crossencoder/outputeval.txt
+  scores: results/biencoder_pretrained_crossencoder/scores.json

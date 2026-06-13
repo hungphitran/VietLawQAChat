@@ -1,1 +1,1 @@
-# vlegal-rag-system
+# vnlegal-rag-v2

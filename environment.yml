@@ -1,0 +1,16 @@
+name: vnlegal-rag-v2
+channels:
+    - conda-forge
+    - defaults
+dependencies:
+    - python=3.13
+    - ipykernel
+    - pandas
+    - matplotlib
+    - seaborn
+    - numpy
+    - pytorch
+    - faiss-cpu
+    - pip
+    - pip:
+        - -e .

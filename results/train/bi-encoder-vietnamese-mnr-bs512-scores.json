@@ -1,0 +1,6 @@
+{
+  "train-vietnamese-bi-encoder-mnr-bs512": {
+    "mrr@10": 0.628550167947047,
+    "success@100": 0.9784495659982041
+  }
+}

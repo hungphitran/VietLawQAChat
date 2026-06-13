@@ -1,0 +1,23 @@
+name: tfidf-only
+
+data:
+  data_path: data/processed
+  corpus_path: data/raw/updated_corpus.csv
+
+retrieval:
+  method: tfidf
+  top_k: 100
+  params:
+    segmentation: underthesea
+
+reranking: null
+
+evaluation:
+  metrics:
+    - { name: mrr@10, fn: mrr_at_k, k: 10 }
+    - { name: success@10, fn: success_at_k, k: 10 }
+    - { name: recall@100, fn: recall_at_k, k: 100 }
+
+output:
+  predictions: results/tfidf_only/outputeval.txt
+  scores: results/tfidf_only/scores.json

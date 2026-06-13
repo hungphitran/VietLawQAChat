@@ -1,0 +1,20 @@
+name: tfidf-non-seg
+
+data:
+  data_path: data/processed
+
+retrieval:
+  method: tfidf
+  top_k: 100
+  params:
+    segmentation: null
+
+reranking: null
+
+evaluation:
+  metrics:
+    - { name: mrr@10, fn: mrr_at_k, k: 10 }
+    - { name: success@100, fn: success_at_k, k: 100 }
+    
+output:
+  scores: results/baseline-selection/tfidf-non-seg-scores.json

@@ -1,0 +1,23 @@
+name: zero-shot-F2LLM-v2-160M
+
+data:
+  data_path: data/processed
+  corpus_from: eval
+
+retrieval:
+  method: dense
+  top_k: 100
+  params:
+    model_name: codefuse-ai/F2LLM-v2-160M
+    encode_kwargs: { batch_size: 64 }
+    max_length: 512
+
+reranking: null
+
+evaluation:
+  metrics:
+    all
+
+output:
+  predictions: results/model-selection/F2LLM-v2-160M/outputeval.txt
+  scores: results/model-selection/F2LLM-v2-160M/scores.json

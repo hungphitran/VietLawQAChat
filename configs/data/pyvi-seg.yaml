@@ -1,0 +1,6 @@
+raw_path: data/raw
+processed_path: data/processed
+eval_size: 0.1
+random_state: 36
+segmentation: pyvi
+overwrite: true

@@ -1,0 +1,24 @@
+name: dense-granite-embedding-97m
+
+data:
+  data_path: data/processed
+
+retrieval:
+  method: dense
+  top_k: 100
+  params:
+    model_name: ibm-granite/granite-embedding-97m-multilingual-r2
+    trust_remote_code: true
+    segmentation: null
+    encode_kwargs: { batch_size: 128, show_progress_bar: true }
+    max_length: 512
+
+reranking: null
+
+evaluation:
+  metrics:
+    - { name: mrr@10, fn: mrr_at_k, k: 10 }
+    - { name: success@100, fn: success_at_k, k: 100 }
+
+output:
+  scores: results/dense-selection/granite-97m-scores.json

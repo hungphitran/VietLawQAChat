@@ -1,0 +1,18 @@
+[project]
+name = "vnlegal-rag-v2"
+version = "0.1.0"
+description = "Modular RAG framework for Vietnamese legal data"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas",
+    "matplotlib",
+    "seaborn",
+    "pyvi",
+    "underthesea",
+    "sentence-transformers>=2.6.0",
+    "bm25s",
+    "faiss-cpu",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
