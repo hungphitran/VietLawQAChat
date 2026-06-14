@@ -56,7 +56,7 @@ class BM25Retriever:
         assert self._bm25 is not None, "Call index() before retrieve()"
 
         query_tokens = _get_tokens(queries, self._method)
-        results, _ = self._bm25.retrieve(query_tokens, k=top_k)
+        results, _ = self._bm25.retrieve(query_tokens, k=top_k, show_progress=False)
 
         return [[self.cids[i] for i in row] for row in results]
 

@@ -11,7 +11,10 @@ retrieval:
     retrievers:
       - method: bm25
         params:
-          segmentation: underthesea
+          variant: bm25
+          segmentation: pyvi
+          k1: 1.0
+          b: 0.9
       - method: dense
         params:
           model_name: phatvucoder/vietnamese-bi-encoder

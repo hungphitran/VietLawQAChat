@@ -45,12 +45,18 @@ def build():
             continue
         gid = d.name
         exps = []
-        for f in sorted(d.glob("*-scores.json")):
+        for f in sorted(d.glob("*.json")):
             data = json.loads(f.read_text())
             for name, scores in data.items():
-                info = parse_name(name)
-                exps.append({"name": name, "group": gid, **info, "metrics": scores})
-                metrics.update(scores.keys())
+                if "stage" in scores:  # nested format (hybrid-tuning): stage + params + metrics
+                    info = {"method": scores["stage"],
+                            "params": {k: str(v) for k, v in scores.get("params", {}).items()}}
+                    entry_metrics = {k: v for k, v in scores.items() if k not in ("stage", "params")}
+                else:  # legacy flat format
+                    info = parse_name(name)
+                    entry_metrics = scores
+                exps.append({"name": name, "group": gid, **info, "metrics": entry_metrics})
+                metrics.update(entry_metrics.keys())
         if exps:
             groups[gid] = {"label": gid, "count": len(exps)}
             experiments.extend(exps)

@@ -177,7 +177,7 @@ class CrossEncoderTrainer:
         transformers.logging.set_verbosity_error()
 
         ce_model = CrossEncoderModel(model_path)
-        reranker = CrossEncoderReranker(ce_model)
+        reranker = CrossEncoderReranker(ce_model, batch_size=256)
         predictions = reranker.rerank(
             queries, predictions, documents, cids, top_k=rerank_top_k,
             show_progress_bar=False,

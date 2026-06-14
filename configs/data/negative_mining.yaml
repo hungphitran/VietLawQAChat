@@ -4,5 +4,6 @@ data_path: data/processed
 strategy: moderate
 num_negatives: 20
 top_k: 100
+batch_size: 256
 seed: 22520465
 output_path: data/processed/20_moderate_neg.csv

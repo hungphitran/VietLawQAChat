@@ -1,0 +1,55 @@
+name: hybrid-tuning
+
+data:
+  data_path: data/processed
+  corpus_path: data/processed/corpus_pyvi.csv   # pre-segmented (pyvi)
+  eval_file: eval_pyvi.csv                       # pre-segmented (pyvi)
+
+# All three components are LOCKED from prior sweeps — only the FUSION is tuned:
+#   dense  trained   0.6372 >> pretrained 0.4615   (dense-selection)
+#   cross  trained   0.7725  (ref 0.7754)           (cross-encoder train)
+#   bm25   k1=1.0 b=0.9 pyvi  0.3928 best           (baseline-selection)
+models:
+  dense:
+    trained: phatvucoder/vietnamese-bi-encoder
+  cross:
+    trained: phatvucoder/PhoRanker-legal-vn
+
+# ── Phase 1: retrieval grid — dense + BM25 fixed; tune fusion only ───────
+retrieval:
+  top_k: 100
+  dense: [trained]
+  bm25:
+    variant: bm25
+    segmentation: pyvi                  # metadata only; corpus file is already segmented
+    k1: 1.0                             # fixed — baseline best
+    b: 0.9                              # fixed — baseline best
+  w_bm25: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  # 0.0 = pure-dense anchor, 1.0 = pure-BM25 anchor (w_dense = 1 - w_bm25)
+  fusion: rrf
+  fusion_k: [5, 10, 20, 30, 60, 100]
+
+# ── Phase 2: rerank the single best retrieval config (by success@100) ────
+rerank:
+  top_k: 10
+  cross: [trained]
+  auto_top_n: 1                         # rerank only the top-1 retrieval config
+  candidate_sets: []
+
+evaluation:
+  # selection_metric picks which Phase-1 config gets reranked (needs top_k>=100)
+  selection_metric: {name: success@100, fn: success_at_k, k: 100}
+  metrics:
+    - {name: mrr@10, fn: mrr_at_k, k: 10}
+    - {name: recall@1, fn: recall_at_k, k: 1}
+    - {name: recall@3, fn: recall_at_k, k: 3}
+    - {name: recall@5, fn: recall_at_k, k: 5}
+    - {name: recall@10, fn: recall_at_k, k: 10}
+    - {name: recall@20, fn: recall_at_k, k: 20}
+    - {name: ndcg@5, fn: ndcg_at_k, k: 5}
+    - {name: ndcg@10, fn: ndcg_at_k, k: 10}
+    - {name: ndcg@20, fn: ndcg_at_k, k: 20}
+
+output:
+  scores: results/hybrid-tuning/scores.json
+  cache_dir: results/hybrid-tuning/cache

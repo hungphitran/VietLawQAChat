@@ -130,6 +130,12 @@ def _accumulate_scores(name: str, scores: dict[str, float], path: str):
 def _expand_grid(config: dict) -> list[tuple[str, dict]]:
     """Expand a config with list-valued retrieval params into individual configs."""
     params = config.get("retrieval", {}).get("params", {})
+
+    # Hybrid configs nest sub-retrievers (and weights) in lists — structural, not
+    # grid-searchable. Skip expansion so these are passed through untouched.
+    if "retrievers" in params:
+        return [("", config)]
+
     list_keys = [k for k, v in params.items() if isinstance(v, (list, tuple, set, range))]
 
     if not list_keys:
