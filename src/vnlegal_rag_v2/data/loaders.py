@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import os
 
@@ -29,6 +31,7 @@ def load_processed(
 class DataLoader:
     @staticmethod
     def load_raw_data(raw_path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """Recursively find `train.csv` + `updated_corpus.csv` under `raw_path` and load both."""
         train_path = None
         corpus_path = None
 

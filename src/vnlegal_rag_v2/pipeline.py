@@ -40,6 +40,7 @@ class RAGPipeline:
         candidates: list[list[int]],
         top_k: int | None = None,
     ) -> list[list[int]]:
+        """Rerank retrieval candidates through each reranker in sequence."""
         assert self._documents is not None, "Call index() first"
         assert self.rerankers, "No rerankers configured"
 

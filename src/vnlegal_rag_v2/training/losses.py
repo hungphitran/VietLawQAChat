@@ -27,6 +27,9 @@ class MultiPositiveContrastiveLoss(nn.Module):
         self.scale = scale
 
     def forward(self, sentence_features, labels: torch.Tensor | None = None):
+        """InfoNCE with multi-positive masking: softmax over all (query, doc) pairs where any
+        pair sharing a group_id is positive. Numerically stabilized by subtracting the
+        per-row max before exp. `labels=None` falls back to single-positive (diagonal mask)."""
         embeddings = [self.model(sf)["sentence_embedding"] for sf in sentence_features]
         queries, docs = embeddings[0], embeddings[1]
 
@@ -75,6 +78,10 @@ class GroupedBatchSampler(Sampler):
         self.group_list = list(groups.keys())
 
     def __iter__(self):
+        """Yield batches (index lists) that keep every row of a group in the same batch.
+
+        Groups are flushed to a new batch when the next group would overflow `batch_size`.
+        """
         order = list(self.group_list)
         if self.shuffle:
             self.rng.shuffle(order)

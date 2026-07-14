@@ -1,0 +1,18 @@
+# Smoke-test config for the app — tiny corpus (data/processed-tiny/).
+# Use:  APP_CONFIG=configs/app/_smoke_tiny.yaml python scripts/serve_app.py
+
+corpus_path: data/processed-tiny/corpus.csv
+
+index_dir: .app_index_tiny
+
+pipeline_config: configs/app/pipeline.yaml
+
+llm:
+  base_url: https://openrouter.ai/api/v1
+  model: google/gemma-4-26b-a4b-it   # overridable via LLM_MODEL in .env
+
+agent:
+  max_rounds: 2
+  top_k_retrieval: 100
+  top_k_rerank: 10
+  context_cap: 15

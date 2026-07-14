@@ -19,5 +19,5 @@ evaluation:
     - { name: recall@100, fn: recall_at_k, k: 100 }
 
 output:
-  predictions: results/bm25_only/outputeval.txt
-  scores: results/bm25_only/scores.json
+  predictions: results/pipeline/bm25_only/outputeval.txt
+  scores: results/pipeline/bm25_only/scores.json

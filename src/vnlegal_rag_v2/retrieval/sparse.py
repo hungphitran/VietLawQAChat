@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import bm25s
 import numpy as np
 from scipy.sparse import spmatrix
@@ -19,6 +21,8 @@ _token_cache: dict[tuple[int, str], object] = {}
 
 
 def _get_tokens(texts: list[str], method: SegmentationMethod) -> object:
+    """Tokenize texts with bm25s, keyed by (id(texts), method) so re-tokenizing the same
+    list (e.g. index then query the same strings) is cached instead of recomputed."""
     cache_key = (id(texts), method)
     if cache_key not in _token_cache:
         segmented = [segment_text(t, method) for t in texts]
@@ -44,6 +48,7 @@ class BM25Retriever:
         self.cids: list[int] = []
 
     def index(self, documents: list[str], cids: list[int]) -> None:
+        """Tokenize corpus and build the BM25 index (variant maps bm25→robertson, bm25+→bm25+)."""
         assert len(documents) == len(cids)
         self.cids = list(cids)
 
@@ -59,6 +64,25 @@ class BM25Retriever:
         results, _ = self._bm25.retrieve(query_tokens, k=top_k, show_progress=False)
 
         return [[self.cids[i] for i in row] for row in results]
+
+    # --- index persistence: bm25s index (incl. vocab_dict) + cids to disk ---
+    def index_signature(self) -> str:
+        """Config that affects the stored index — changing it invalidates the cache."""
+        return f"bm25|variant={self._variant}|seg={self._method}|kw={sorted(self._bm25_kwargs.items())}"
+
+    def save(self, path: str | Path) -> None:
+        assert self._bm25 is not None, "Call index() before save()"
+        p = Path(path)
+        p.mkdir(parents=True, exist_ok=True)
+        self._bm25.save(str(p / "bm25s"), show_progress=False)
+        np.save(p / "cids.npy", np.asarray(self.cids, dtype=np.int64))
+
+    def load(self, path: str | Path) -> None:
+        p = Path(path)
+        # vocab_dict is saved inside the bm25s index, so the standard query
+        # tokenize path (no vocab passed) reproduces in-memory retrieval exactly.
+        self._bm25 = bm25s.BM25.load(str(p / "bm25s"), load_corpus=False)
+        self.cids = np.load(p / "cids.npy").tolist()
 
 
 class TFIDFRetriever:

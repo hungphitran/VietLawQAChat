@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from vnlegal_rag_v2.data.loaders import DataLoader
@@ -24,6 +26,9 @@ class DataPreparationPipeline:
         self.segmentation_methods: list[SegmentationMethod] = segmentation_methods or [None]
 
     def run(self) -> None:
+        """Build QA pairs + train/eval split once, then write a train/eval/corpus CSV set
+        per segmentation method (suffix `_pyvi`/`_underthesea`, or none). Same split across
+        all segmentations so results stay comparable."""
         train_df, corpus_df = DataLoader.load_raw_data(self.raw_path)
 
         # Build QA pairs and split once (same split for all segmentations)

@@ -1,0 +1,42 @@
+# ════════════════════════════════════════════════════════════════════════
+# APP PIPELINE — dense bi-encoder + PhoRanker cross-encoder.
+#   • dense   = phatvucoder/vietnamese-bi-encoder   (train-vietnamese-bi-encoder, pyvi)
+#   • rerank  = phatvucoder/PhoRanker-legal-vn      (cross_phranker_n10_bce)
+# This matches the `cross_phranker_n10_bce` run in results/scores.json (MRR@10 0.7725).
+#
+# BM25 is kept in the retriever list but weighted 0, so HybridRetriever skips it
+# entirely (no indexing, no per-query retrieve) → pure dense bi-encoder mode.
+# To re-enable hybrid retrieval, bump weights back to e.g. [0.3, 0.7] (w_bm25=0.3,
+# fusion_k=10 gave the best end-to-end 0.7733) — nothing else changes.
+# ════════════════════════════════════════════════════════════════════════
+
+retrieval:
+  method: hybrid
+  top_k: 100
+  params:
+    retrievers:
+      - method: bm25                # weighted 0 → skipped at index + retrieve time
+        params:
+          variant: bm25+
+          segmentation: pyvi
+          k1: 1.2
+          b: 0.9
+          delta: 1.0
+      - method: dense
+        params:
+          model_name: phatvucoder/vietnamese-bi-encoder   # trained (pyvi)
+          segmentation: pyvi
+          encode_kwargs:
+            batch_size: 256
+    weights: [0.0, 1.0]   # w_bm25=0 → dense-only; bump to 0.3 for hybrid
+    fusion: rrf
+    fusion_kwargs:
+      k: 60
+
+reranking:
+  method: cross_encoder
+  top_k: 10
+  params:
+    model_name: phatvucoder/PhoRanker-legal-vn   # trained (PhoRanker, n=10, bce)
+    max_length: 256
+    batch_size: 256           # match eval (default 16 was the per-query bottleneck)

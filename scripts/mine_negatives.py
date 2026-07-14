@@ -1,5 +1,7 @@
 """Mine negative examples for cross-encoder training using a trained bi-encoder."""
 
+from __future__ import annotations
+
 import argparse
 import ast
 
@@ -39,7 +41,10 @@ def main():
     cids = corpus_df["cid"].tolist()
     train_df = load_processed(cfg["data_path"], f"train{suffix}.csv")
     queries = train_df["question"].tolist()
-    relevant_cids = [ast.literal_eval(c) if isinstance(c, str) else c for c in train_df["relevant_cids"]]
+    relevant_cids = [
+        ast.literal_eval(c) if isinstance(c, str) else c
+        for c in train_df["relevant_cids"]
+    ]
 
     miner = NegativeMiner(retriever, documents, cids)
     df = miner.mine_to_csv(

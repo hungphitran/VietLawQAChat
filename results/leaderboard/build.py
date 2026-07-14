@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Build data.js and serve leaderboard. Stars save to favorites.txt."""
 
+from __future__ import annotations
+
 import json
 import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -76,6 +78,10 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*a, directory=str(DIR), **kw)
 
     def do_GET(self):
+        if self.path == "/favicon.ico":  # browsers auto-request this; answer cleanly instead of 404
+            self.send_response(204)
+            self.end_headers()
+            return
         if self.path == "/api/favorites":
             names = FAVS.read_text().strip().splitlines() if FAVS.exists() else []
             self._json([n for n in names if n.strip()])
@@ -108,7 +114,12 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, fmt, *args):
-        if "/api/" in (args[0] if args else ""):
+        # only log /api/ requests; ignore static-file access and errors.
+        # send_error() calls log_error("code %d ...", <HTTPStatus>, ...), so args[0]
+        # may be an HTTPStatus enum rather than a str — guard before the substring check
+        # (otherwise "/api/" in <HTTPStatus> raises TypeError and spams a traceback).
+        first = args[0] if args else ""
+        if isinstance(first, str) and "/api/" in first:
             super().log_message(fmt, *args)
 
 

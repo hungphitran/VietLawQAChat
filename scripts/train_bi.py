@@ -1,5 +1,7 @@
 """Train Bi-Encoder model."""
 
+from __future__ import annotations
+
 import argparse
 import os
 
@@ -12,6 +14,8 @@ from vnlegal_rag_v2.training.bi_encoder import BiEncoderTrainer
 def main():
     parser = argparse.ArgumentParser(description="Train Bi-Encoder")
     parser.add_argument("--config", type=str, required=True, help="Path to training config YAML")
+    parser.add_argument("--results", type=str, default="results/scores.json",
+                        help="Overall scores file (default: results/scores.json)")
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
@@ -41,11 +45,13 @@ def main():
         seed=config.get("seed", 28),
     )
 
-    # Evaluate best model on eval set
     best_model_path = os.path.join(config.get("output_dir", "models/BiEncoder/model1"), "best")
     print(f"\nEvaluating {best_model_path}...")
 
-    metrics_config = config.get("eval_metrics", [{"name": "mrr@10", "fn": "mrr_at_k", "k": 10}, {"name": "success@100", "fn": "success_at_k", "k": 100}])
+    metrics_config = config.get("eval_metrics", [
+        {"name": "mrr@10", "fn": "mrr_at_k", "k": 10},
+        {"name": "success@100", "fn": "success_at_k", "k": 100},
+    ])
 
     scores = trainer.evaluate(
         model_path=best_model_path,
@@ -56,14 +62,12 @@ def main():
         encode_kwargs={"batch_size": config.get("batch_size", 32), "show_progress_bar": True},
     )
 
-    # Save scores
     output_scores = config.get("output_scores")
     experiment_name = config.get("name", "train-unknown")
     if output_scores:
         Evaluator.save_results({experiment_name: scores}, output_scores)
 
-    # Also update master scores.json
-    Evaluator.save_results({experiment_name: scores}, config.get("scores_json", "results/scores.json"))
+    Evaluator.save_results({experiment_name: scores}, args.results)
 
 
 if __name__ == "__main__":

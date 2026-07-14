@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 from typing import Callable, TypeAlias
 
@@ -5,6 +7,7 @@ MetricFn: TypeAlias = Callable[[list[list[int]], list[list[int]], int], float]
 
 
 def _hit_count(pred: list[int], relevant: set[int]) -> int:
+    """Number of cids in `pred` that are relevant."""
     return sum(1 for cid in pred if cid in relevant)
 
 
@@ -13,6 +16,7 @@ def success_at_k(
     relevant_cids: list[list[int]],
     k: int = 10,
 ) -> float:
+    """Hit rate: fraction of queries with at least one relevant cid in the top k."""
     assert len(predictions) == len(relevant_cids)
 
     total = 0
@@ -28,6 +32,7 @@ def mrr_at_k(
     relevant_cids: list[list[int]],
     k: int = 10,
 ) -> float:
+    """Mean Reciprocal Rank: average of 1/rank for the first relevant cid within top k."""
     assert len(predictions) == len(relevant_cids)
 
     total = 0.0
@@ -46,6 +51,7 @@ def recall_at_k(
     relevant_cids: list[list[int]],
     k: int = 10,
 ) -> float:
+    """Recall: fraction of relevant cids found in the top k (0 for queries with no relevants)."""
     assert len(predictions) == len(relevant_cids)
 
     total = 0.0
@@ -63,6 +69,7 @@ def precision_at_k(
     relevant_cids: list[list[int]],
     k: int = 10,
 ) -> float:
+    """Precision: average hits/k across queries (assumes k predictions are returned)."""
     assert len(predictions) == len(relevant_cids)
 
     total = 0.0
@@ -78,6 +85,7 @@ def f1_at_k(
     relevant_cids: list[list[int]],
     k: int = 10,
 ) -> float:
+    """F1 of precision@k and recall@k, averaged over queries with relevant cids."""
     assert len(predictions) == len(relevant_cids)
 
     total = 0.0
@@ -99,6 +107,9 @@ def ndcg_at_k(
     relevant_cids: list[list[int]],
     k: int = 10,
 ) -> float:
+    """Normalized Discounted Cumulative Gain: DCG/IDCG with binary relevance, averaged.
+    IDCG is the ideal (relevant docs ranked first); 0 for queries with no relevants.
+    """
     assert len(predictions) == len(relevant_cids)
 
     total = 0.0

@@ -1,5 +1,7 @@
 """Process raw data into train/eval CSVs."""
 
+from __future__ import annotations
+
 import argparse
 
 import yaml

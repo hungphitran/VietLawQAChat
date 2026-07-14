@@ -15,6 +15,8 @@ Usage:
     python scripts/tune_hybrid.py configs/hybrid-tuning/hybrid_sweep.yaml --vram 16
 """
 
+from __future__ import annotations
+
 import argparse
 import itertools
 import json
@@ -86,12 +88,14 @@ def _grid(v) -> list:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("config", help="Path to hybrid tuning YAML config")
-    ap.add_argument("--vram", type=str, default="auto", help="VRAM in GB, or 'auto' (default)")
-    ap.add_argument("--no-cache-rerank", action="store_true",
-                    help="Always recompute Phase 2 rerank (ignore stale rerank caches)")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("config", help="Path to hybrid tuning YAML config")
+    parser.add_argument("--vram", type=str, default="auto", help="VRAM in GB, or 'auto' (default)")
+    parser.add_argument("--no-cache-rerank", action="store_true",
+                        help="Always recompute Phase 2 rerank (ignore stale rerank caches)")
+    parser.add_argument("--results", type=str, default="results/scores.json",
+                        help="Overall scores file every experiment accumulates into (default: results/scores.json)")
+    args = parser.parse_args()
 
     with open(args.config) as f:
         cfg = yaml.safe_load(f)
@@ -134,6 +138,7 @@ def main() -> None:
     def log(name, scores, stage, params):
         results[name] = {**scores, "stage": stage, "params": params}
         json.dump(results, open(scores_path, "w"), ensure_ascii=False, indent=2)
+        Evaluator.save_results({name: scores}, args.results)
 
     # ── Phase 1: build indexes once, cache rankings ──────────────────
     dense_keys = _grid(cfg["retrieval"]["dense"])

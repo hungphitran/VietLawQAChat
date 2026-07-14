@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .loaders import (
     DataLoader,
     extract_corpus,

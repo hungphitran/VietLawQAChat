@@ -1,5 +1,7 @@
 """Train Cross-Encoder model."""
 
+from __future__ import annotations
+
 import argparse
 import os
 
@@ -19,12 +21,13 @@ def main():
     parser.add_argument("--num-negatives", type=int, default=None)
     parser.add_argument("--name", type=str, default=None)
     parser.add_argument("--output-scores", type=str, default=None)
+    parser.add_argument("--results", type=str, default="results/scores.json",
+                        help="Overall scores file (default: results/scores.json)")
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
-    # Apply CLI overrides
     for key, val in vars(args).items():
         if key != "config" and val is not None:
             config[key] = val
@@ -54,7 +57,6 @@ def main():
         seed=config.get("seed", 42),
     )
 
-    # Evaluate best model on eval set
     best_model_path = os.path.join(config.get("output_dir", "models/cross-encoder"), "best")
     print(f"\nEvaluating {best_model_path}...")
 
@@ -74,14 +76,12 @@ def main():
         encode_kwargs={"batch_size": config.get("batch_size", 64), "show_progress_bar": True},
     )
 
-    # Save scores
     output_scores = config.get("output_scores")
     experiment_name = config.get("name", "cross-unknown")
     if output_scores:
         Evaluator.save_results({experiment_name: scores}, output_scores)
 
-    # Also update master scores.json
-    Evaluator.save_results({experiment_name: scores}, config.get("scores_json", "results/scores.json"))
+    Evaluator.save_results({experiment_name: scores}, args.results)
 
 
 if __name__ == "__main__":

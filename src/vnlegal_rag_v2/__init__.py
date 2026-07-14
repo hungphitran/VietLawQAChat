@@ -1,3 +1,4 @@
+from __future__ import annotations
 from vnlegal_rag_v2.pipeline import RAGPipeline
 
 __all__ = [

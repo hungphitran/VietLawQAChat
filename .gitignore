@@ -194,6 +194,9 @@ cython_debug/
 # Trained models (large binary files)
 models/
 
+# App retrieval-index cache (FAISS + bm25s artifacts, ~1GB; rebuilt from corpus)
+.app_index/
+
 # PyPI configuration file
 .pypirc
 

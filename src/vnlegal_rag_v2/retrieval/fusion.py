@@ -8,6 +8,9 @@ def rrf(
     weights: list[float],
     **kwargs,
 ) -> list[int]:
+    """Reciprocal Rank Fusion: merge multiple ranked lists into one by summing each cid's
+    weighted reciprocal rank `weight / (k + rank)`. Higher `k` smooths top ranks. Returns
+    cids sorted by fused score (descending)."""
     k = kwargs.get("k", 60)
     scores: dict[int, float] = defaultdict(float)
 

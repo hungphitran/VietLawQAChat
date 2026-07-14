@@ -30,5 +30,5 @@ evaluation:
     - { name: recall@100, fn: recall_at_k, k: 100 }
 
 output:
-  predictions: results/hybrid_bm25_dense_pretrained/outputeval.txt
-  scores: results/hybrid_bm25_dense_pretrained/scores.json
+  predictions: results/pipeline/hybrid_bm25_dense_pretrained/outputeval.txt
+  scores: results/pipeline/hybrid_bm25_dense_pretrained/scores.json

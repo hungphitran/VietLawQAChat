@@ -16,6 +16,12 @@ FUSION_REGISTRY = {
 
 
 def _seg(value: str | None) -> SegmentationMethod:
+    """Normalize config string to SegmentationMethod.
+
+    None / "none" / "None" / "null" / "" → None (no segmentation).
+    "pyvi" / "underthesea" → passed through.
+    Everything else raises.
+    """
     if value is None or value in ("none", "None", "null", ""):
         return None
     if value in ("pyvi", "underthesea"):
@@ -24,6 +30,7 @@ def _seg(value: str | None) -> SegmentationMethod:
 
 
 def _build_retriever(config: dict):
+    """Build a retriever from a `{method, params}` config dict. Recurses for hybrid."""
     method = config["method"]
     params = config.get("params", {})
 
@@ -53,6 +60,7 @@ def _build_retriever(config: dict):
             model=model,
             segmentation_method=_seg(params.get("segmentation")),
             encode_kwargs=params.get("encode_kwargs"),
+            model_name=params["model_name"],
         )
 
     if method == "hybrid":
@@ -69,6 +77,7 @@ def _build_retriever(config: dict):
 
 
 def _build_rerankers(config: dict | None) -> list | None:
+    """Build the reranker chain from a `{method, params}` config (None → no reranking)."""
     if config is None:
         return None
 

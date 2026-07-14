@@ -53,6 +53,12 @@ class BiEncoderTrainer:
         seed: int = 28,
         **kwargs,
     ) -> None:
+        """Fine-tune the bi-encoder with contrastive learning, saving the best checkpoint.
+
+        Loads pre-segmented CSVs when `segmentation` is set (suffix convention), else raw.
+        `loss_type="mnr"` uses MultipleNegativesRankingLoss; `"multi_positive"` groups
+        multiple positives per query (see `_setup_multi_positive`). Best model → `output_dir/best`.
+        """
         if max_length is not None:
             self.model.max_seq_length = max_length
 
@@ -170,6 +176,10 @@ class BiEncoderTrainer:
         metrics: list[dict] | None = None,
         encode_kwargs: dict | None = None,
     ) -> dict[str, float]:
+        """Zero-shot retrieval eval: index `data_path` corpus with `model_path`, retrieve, score.
+
+        No segmentation here — the corpus file is already segmented when pre-segmented.
+        """
         from vnlegal_rag_v2.data.loaders import extract_queries
         from vnlegal_rag_v2.evaluation.evaluator import Evaluator
         from vnlegal_rag_v2.evaluation.metrics import (

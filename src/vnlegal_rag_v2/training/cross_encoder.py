@@ -42,8 +42,6 @@ class CrossEncoderTrainer:
             trust_remote_code=trust_remote_code,
         )
 
-        # Use fp16 in training args for proper mixed precision, not .half()
-
     def train(
         self,
         data_path: str = "data/processed",
@@ -64,6 +62,12 @@ class CrossEncoderTrainer:
         seed: int = 42,
         **kwargs,
     ) -> None:
+        """Fine-tune the cross-encoder (reranker) on positives + pre-mined negatives.
+
+        `loss_type="bce"` is pointwise (binary cross-entropy); `"ranknet"` is listwise
+        (incompatible with pointwise eval, so eval/checkpointing is disabled for it).
+        Best model → `output_dir/best`. See `_build_dataset` for the data format.
+        """
         suffix = f"_{segmentation}" if segmentation else ""
         pos_df = load_processed(data_path, f"train{suffix}.csv")
         eval_df = load_processed(data_path, f"eval{suffix}.csv")
@@ -129,6 +133,8 @@ class CrossEncoderTrainer:
         metrics: list[dict] | None = None,
         encode_kwargs: dict | None = None,
     ) -> dict[str, float]:
+        """Two-stage eval: dense-retrieve top-k candidates, then cross-encoder rerank, then score."""
+
         from vnlegal_rag_v2.evaluation.evaluator import Evaluator
         from vnlegal_rag_v2.evaluation.metrics import (
             mrr_at_k,
@@ -155,7 +161,6 @@ class CrossEncoderTrainer:
         }
         metric_defs = [(m["name"], fn_map[m["fn"]], m["k"]) for m in metrics]
 
-        # Load data
         suffix = f"_{segmentation}" if segmentation else ""
         eval_df = load_processed(data_path, f"eval{suffix}.csv")
         corpus_df = load_processed(data_path, f"corpus{suffix}.csv")
@@ -163,7 +168,6 @@ class CrossEncoderTrainer:
         documents = corpus_df["text"].tolist()
         cids = corpus_df["cid"].tolist()
 
-        # Stage 1: Dense retrieval
         bi_model = BiEncoderModel(
             retriever_model or "phatvucoder/vietnamese-bi-encoder",
             trust_remote_code=True,
@@ -172,7 +176,6 @@ class CrossEncoderTrainer:
         retriever.index(documents, cids)
         predictions = retriever.retrieve(queries, top_k=retrieve_top_k)
 
-        # Stage 2: Cross-encoder reranking
         import transformers
         transformers.logging.set_verbosity_error()
 
@@ -183,7 +186,6 @@ class CrossEncoderTrainer:
             show_progress_bar=False,
         )
 
-        # Compute metrics
         results = Evaluator(predictions, relevant_cids).evaluate(metric_defs)
         for name, score in results.items():
             print(f"  {name}: {score:.4f}")
@@ -222,6 +224,12 @@ class CrossEncoderTrainer:
 
     @staticmethod
     def _build_pointwise_dataset(pos_df, neg_by_query: dict[str, list[str]]) -> Dataset:
+        """Format (query, doc, label) triples for BCEWithLogitsLoss.
+
+        Each positive row produces (question, positive_text, 1.0) followed by
+        (question, neg_text, 0.0) per mined negative. The column names
+        `sentence_0`/`sentence_1`/`label` match sentence-transformers' BCE loss.
+        """
         s0, s1, labels = [], [], []
         for _, row in pos_df.iterrows():
             s0.append(row["question"])
@@ -235,6 +243,11 @@ class CrossEncoderTrainer:
 
     @staticmethod
     def _build_listwise_dataset(pos_df, neg_by_query: dict[str, list[str]]) -> Dataset:
+        """Format (query, doc_list, label_list) groups for RankNetLoss.
+
+        Each row: query → [positive_text, neg1, neg2, ...], labels → [1.0, 0.0, ...].
+        Column names `query`/`docs`/`label` match sentence-transformers' RankNet.
+        """
         queries, docs, lbls = [], [], []
         for _, row in pos_df.iterrows():
             q = row["question"]

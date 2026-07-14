@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .bi_encoder import BiEncoderTrainer
 from .cross_encoder import CrossEncoderTrainer
 from .losses import GroupedBatchSampler, GroupedBatchSamplerFactory, MultiPositiveContrastiveLoss

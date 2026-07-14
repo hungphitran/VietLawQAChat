@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import os
 from typing import TypeAlias
@@ -102,6 +104,8 @@ class DataProcessor:
         eval_size: float = 0.1,
         random_state: int = 36,
     ) -> tuple[list[dict], list[dict]]:
+        """Split by *unique question* (not row) so every (question, positive) pair for a
+        given question lands in the same split — prevents train/eval leakage."""
         df = pd.DataFrame(samples)
         unique_questions = pd.Series(df["question"].unique())
         train_q, eval_q = train_test_split(
@@ -122,6 +126,8 @@ class DataProcessor:
         eval_filename: str = "eval.csv",
         overwrite: bool = False,
     ) -> None:
+        """Write train/eval CSVs. `overwrite=True` removes existing files first; otherwise
+        raises FileExistsError if either output already exists (safety against clobbering)."""
         os.makedirs(output_path, exist_ok=True)
 
         output_files = [

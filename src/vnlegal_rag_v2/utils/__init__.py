@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .batch_size import compute_batch_sizes, detect_vram, resolve_model
 from .device import get_device
 from .io import check_existing_files

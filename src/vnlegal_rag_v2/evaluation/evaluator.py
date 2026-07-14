@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import json
 import os
@@ -25,6 +27,7 @@ class Evaluator:
         self,
         metrics: list[tuple[str, MetricFn, int]] | None = None,
     ) -> dict[str, float]:
+        """Compute each metric (name, fn, k) → {name: score}. Defaults to mrr@10 + success@10."""
         if metrics is None:
             metrics = [
                 ("mrr@10", mrr_at_k, 10),
@@ -40,6 +43,7 @@ class Evaluator:
         results: dict[str, float],
         output_path: str,
     ) -> None:
+        """Merge `results` into the JSON at `output_path` (creating it if absent), keyed by name."""
         dir_path = os.path.dirname(output_path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
@@ -59,7 +63,12 @@ class Evaluator:
         pred_path: str,
         data_path: str,
         cid_column: str = "relevant_cids",
-    ) -> "Evaluator":
+    ) -> Evaluator:
+        """Build Evaluator from line-delimited prediction file and eval CSV.
+
+        Predictions file: one line per query, space-separated cids.
+        Eval CSV must have a column `cid_column` with list-of-int strings.
+        """
         predictions = _load_predictions(pred_path)
         relevant_cids = _load_relevant_cids(data_path, cid_column)
         return cls(predictions, relevant_cids)

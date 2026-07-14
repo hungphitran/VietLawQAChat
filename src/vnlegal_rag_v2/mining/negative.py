@@ -30,6 +30,13 @@ class NegativeMiner:
         seed: int = 28,
         **kwargs,
     ) -> list[dict]:
+        """Mine negatives per query under `strategy`.
+
+        - easy      : uniform random from the corpus (no retriever needed)
+        - moderate  : random sample from the retriever's top-k non-relevant
+        - semi_hard : docs ranked just after the last relevant (margin window)
+        - hard      : the top-ranked non-relevant docs (hardest negatives)
+        """
         assert len(queries) == len(relevant_cids)
         assert strategy in ("easy", "moderate", "semi_hard", "hard")
 
@@ -71,6 +78,11 @@ class NegativeMiner:
         seed: int = 28,
         **kwargs,
     ) -> pd.DataFrame:
+        """Mine negatives per query and write to CSV.
+
+        Columns: query, positive_text, positive_cid, negative_text, negative_cid.
+        Also returns the DataFrame for downstream inspection.
+        """
         results = self.mine(
             queries, relevant_cids, strategy, num_negatives, top_k, seed,
             **kwargs,
@@ -86,6 +98,7 @@ class NegativeMiner:
         num_negatives: int,
         seed: int = 28,
     ) -> list[list[int]]:
+        """Sample `num_negatives` random non-relevant cids per query (no retriever needed)."""
         rng = random.Random(seed)
         cid_set = set(corpus_cids)
 
@@ -104,6 +117,8 @@ class NegativeMiner:
         strategy: str = "hard",
         seed: int = 28,
     ) -> list[list[int]]:
+        """Pick negatives from retriever predictions. `hard` = the highest-ranked
+        non-relevant docs; `moderate` = a random sample of them (easier, more diverse)."""
         assert len(pred_cids) == len(relevant_cids)
         assert strategy in ("moderate", "hard")
 
@@ -130,7 +145,9 @@ class NegativeMiner:
         num_negatives: int,
         margin: int = 10,
     ) -> list[list[int]]:
-        """Negatives ranked just after the last relevant document in predictions."""
+        """Negatives in the `margin`-sized window just after the last relevant doc in the
+        ranking — harder than random, easier than top-ranked. Falls back to hard if no
+        relevant doc appears in the predictions."""
         assert len(pred_cids) == len(relevant_cids)
 
         results = []

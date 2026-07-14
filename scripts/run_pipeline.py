@@ -1,5 +1,7 @@
 """Run full pipeline: load data → index → retrieve → (rerank) → evaluate → log results."""
 
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -170,7 +172,6 @@ def run_single(config_path: str, results_path: str | None = None) -> dict[str, d
     if is_grid:
         print(f"\nGrid search: {len(grid)} combinations")
 
-    # Load eval data once
     data_config = config["data"]
     data_path = data_config["data_path"]
     eval_seg = config.get("retrieval", {}).get("params", {}).get("segmentation")

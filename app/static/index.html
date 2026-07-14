@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trợ lý Pháp luật Việt Nam</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <main class="main-col">
+      <header>
+        <h1>⚖️ Trợ lý Pháp luật Việt Nam</h1>
+        <p class="subtitle">Hỏi đáp pháp luật — Agentic RAG nhiều vòng, trả lời trực tiếp (streaming)</p>
+      </header>
+
+      <div id="messages" class="messages">
+        <div class="msg assistant">
+          <div class="bubble">Xin chào! Tôi trả lời dựa trên kho văn bản pháp luật. Bạn muốn hỏi gì?</div>
+        </div>
+      </div>
+      <div id="status" class="status"></div>
+
+      <form id="chat-form" class="chat-form">
+        <input id="question" type="text" placeholder="Nhập câu hỏi pháp luật…" autocomplete="off" autofocus />
+        <button id="send" type="submit">Gửi</button>
+      </form>
+    </main>
+
+    <aside id="thinking" class="thinking" aria-hidden="true">
+      <div class="thinking-head">
+        <span>🧠 Quá trình suy nghĩ</span>
+        <button id="thinking-close" type="button" aria-label="Đóng">×</button>
+      </div>
+      <div id="trace" class="trace">
+        <div class="trace-empty">Đặt câu hỏi rồi nhấn <b>💭 Quá trình suy nghĩ</b> để xem các bước tìm kiếm và suy nghĩ tại đây.</div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="cite-modal" class="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <button class="modal-close" type="button" data-close aria-label="Đóng">×</button>
+      <div class="modal-head">
+        <span class="modal-cid"></span>
+        <span class="modal-section"></span>
+      </div>
+      <div class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -19,5 +19,5 @@ evaluation:
     - { name: recall@100, fn: recall_at_k, k: 100 }
 
 output:
-  predictions: results/tfidf_only/outputeval.txt
-  scores: results/tfidf_only/scores.json
+  predictions: results/pipeline/tfidf_only/outputeval.txt
+  scores: results/pipeline/tfidf_only/scores.json

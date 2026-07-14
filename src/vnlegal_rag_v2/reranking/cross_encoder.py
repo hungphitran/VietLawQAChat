@@ -20,6 +20,12 @@ class CrossEncoderReranker:
         top_k: int = 100,
         **kwargs,
     ) -> list[list[int]]:
+        """Score every (query, candidate-doc) pair with the cross-encoder, then return the
+        top_k docs per query sorted by score.
+
+        All pairs are flattened into one batched `predict()` call (GPU-efficient), then split
+        back per query using the cumulative-boundary offsets.
+        """
         assert len(queries) == len(candidate_cids)
 
         cid_to_idx = {cid: i for i, cid in enumerate(cids)}

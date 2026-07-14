@@ -5,3 +5,14 @@ dense-embeddinggemma-300m
 dense-vietnamese-bi-encoder
 dense-multilingual-e5-base
 dense-granite-embedding-97m
+train-vietnamese-bi-encoder-mp-bs512
+train-vietnamese-bi-encoder-mnr-bs512
+train-vietnamese-bi-encoder
+train-multilingual-e5-base
+train-granite-embedding-97m-multilingual-r2
+train-embeddinggemma-300m
+retr_trained_k1=1.0_b=0.9_w=0.2_fk=5
+retr_trained_k1=1.0_b=0.9_w=0.3_fk=5
+retr_trained_k1=1.0_b=0.9_w=0.2_fk=10
+rerank_auto-trained-w=0.3-fk=10_trained
+cross_phranker_n10_bce

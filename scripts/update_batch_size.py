@@ -11,6 +11,8 @@ Usage:
     python scripts/update_batch_size.py --vram 16 --dry-run  # preview only
 """
 
+from __future__ import annotations
+
 import argparse
 import re
 import sys

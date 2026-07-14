@@ -25,5 +25,5 @@ evaluation:
     - { name: recall@100, fn: recall_at_k, k: 100 }
 
 output:
-  predictions: results/biencoder_trained_cross_trained/outputeval.txt
-  scores: results/biencoder_trained_cross_trained/scores.json
+  predictions: results/pipeline/biencoder_trained_cross_trained/outputeval.txt
+  scores: results/pipeline/biencoder_trained_cross_trained/scores.json

@@ -1,0 +1,27 @@
+# App config for the chat UI — ONE fixed pipeline (the best config).
+# After hybrid tuning finalizes, paste the winning params into pipeline.yaml.
+#
+# LLM settings are env-overridable: LLM_BASE_URL / LLM_API_KEY / LLM_MODEL
+# (see src/vnlegal_rag_v2/rag/llm.py). Defaults to OpenRouter.
+
+# Production corpus: data/processed/corpus.csv — the canonical 262k-doc eval corpus
+# (MRR@10 0.7725 measured on it) and the same file the cloud build notebook fetches,
+# so a cloud-built .app_index is a cache hit locally. Plain text (dense segments inline).
+# Smoke test: data/processed-tiny/corpus.csv via APP_CONFIG.
+corpus_path: data/processed/corpus.csv
+
+# Disk cache for the retrieval index (FAISS + bm25s); rebuilt only when the
+# corpus or pipeline config changes. Gitignored (~1GB on full corpus).
+index_dir: .app_index
+
+pipeline_config: configs/app/pipeline.yaml
+
+llm:
+  base_url: https://openrouter.ai/api/v1
+  model: google/gemma-4-26b-a4b-it
+
+agent:
+  max_rounds: 2
+  top_k_retrieval: 100
+  top_k_rerank: 10
+  context_cap: 15
